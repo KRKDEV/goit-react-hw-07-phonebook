@@ -4,17 +4,26 @@ import Filter from './Filter/Filter';
 import ContactList from './Contacts/Contacts';
 import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { addContact, deleteContact, getContacts } from '../redux/contactsSlice';
-import { setStatusFilter, getStatusFilter } from 'redux/filtersSlice';
+import {
+  fetchContacts,
+  addContact,
+  deleteContact,
+  selectContacts,
+  selectIsLoading,
+  selectError,
+} from '../redux/contactsSlice';
+import { setStatusFilter, selectStatusFilter } from 'redux/filtersSlice';
 
 export const App = () => {
-  const contacts = useSelector(getContacts);
-  const filter = useSelector(getStatusFilter);
+  const contacts = useSelector(selectContacts);
+  const filter = useSelector(selectStatusFilter);
+  const isLoading = useSelector(selectIsLoading);
+  const error = useSelector(selectError);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    localStorage.setItem('contacts', JSON.stringify(contacts));
-  }, [contacts]);
+    dispatch(fetchContacts());
+  }, [dispatch]);
 
   const handleSubmit = contact => {
     dispatch(addContact(contact));
@@ -40,7 +49,18 @@ export const App = () => {
       <Form contacts={contacts} onSubmit={handleSubmit} />
       <h2>Contacts</h2>
       <Filter value={filter} onChange={filterChange} />
-      <ContactList contacts={filteredContacts} onDelete={handleDeleteContact} />
+      {isLoading && !error && (
+        <div className={css.info}>Request in progress...</div>
+      )}
+      {contacts.length === 0 && !isLoading && (
+        <div className={css.info}>No contacts in phonebook.</div>
+      )}
+      {contacts.length > 0 && (
+        <ContactList
+          contacts={filteredContacts}
+          onDelete={handleDeleteContact}
+        />
+      )}
     </div>
   );
 };
